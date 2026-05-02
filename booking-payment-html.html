@@ -1,0 +1,40 @@
+<h2>Booking</h2>
+
+<label>Check-in Date</label>
+<input type="date" id="checkInDate">
+
+<label>Check-out Date</label>
+<input type="date" id="checkOutDate">
+
+<button onclick="confirmDates()">Confirm Dates</button>
+
+<div id="bookingSection" class="hidden-section">
+    <h2>User Login / Booking Info</h2>
+
+    <input type="text" id="userName" placeholder="Username / Name">
+    <input type="email" id="userEmail" placeholder="Email">
+    <input type="text" id="userPhone" placeholder="Phone">
+    <input type="password" id="userPassword" placeholder="Password">
+
+    <button onclick="startBooking()">Confirm Booking Info</button>
+</div>
+
+<div id="paymentSection" class="hidden-section">
+    <h2>Payment</h2>
+
+    <p><b>Total Amount:</b> ৳<span id="totalAmount">0</span></p>
+    <p><b>Payment Status:</b> <span id="paymentStatus">Unpaid</span></p>
+
+    <select id="payMethod">
+        <option value="">Select Payment Method</option>
+        <option value="cash">Cash</option>
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+        <option value="visa card">Visa Card</option>
+        <option value="master card">Master Card</option>
+    </select>
+
+    <button onclick="confirmPayment()">Confirm Payment</button>
+</div>
+
+<p id="message"></p>
