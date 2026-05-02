@@ -1,0 +1,59 @@
+.details-right h2 {
+    color: #314f2b;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+.details-right label {
+    display: block;
+    font-size: 17px;
+    font-weight: bold;
+    color: #314f2b;
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.details-right input,
+.details-right select {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border: 1px solid #bdbdbd;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.details-right button {
+    width: 100%;
+    background: #314f2b;
+    color: #f0b829;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.details-right button:hover {
+    background: #243a20;
+}
+
+.hidden-section {
+    display: none;
+}
+
+#paymentSection {
+    margin-top: 20px;
+    background: #f4f4f4;
+    padding: 18px;
+    border-radius: 14px;
+}
+
+#message {
+    margin-top: 18px;
+    color: #314f2b;
+    font-weight: bold;
+    line-height: 1.6;
+}
