@@ -57,3 +57,11 @@
     font-weight: bold;
     line-height: 1.6;
 }
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    background: #d3d3d3 !important;
+    color: #777 !important;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
