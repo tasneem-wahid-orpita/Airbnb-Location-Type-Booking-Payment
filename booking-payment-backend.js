@@ -50,110 +50,108 @@ app.post("/bookings/start", (req, res) => {
             return;
         }
 
-        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-        const total_amount = nights * Number(property.price_per_night);
+        const overlapSql = `
+            SELECT *
+            FROM bookings
+            WHERE property_id = ?
+            AND check_in_date < ?
+            AND check_out_date > ?
+        `;
 
-        const findUserSql = "SELECT * FROM users WHERE email = ?";
-
-        db.query(findUserSql, [email], (err, userResult) => {
+        db.query(overlapSql, [property_id, check_out_date, check_in_date], (err, overlapResult) => {
             if (err) {
                 res.status(500).json({ error: err });
                 return;
             }
 
-            if (userResult.length > 0) {
-                const existingUser = userResult[0];
-
-                if (existingUser.password !== password) {
-                    res.status(401).json({
-                        message: "This email already exists with a different password"
-                    });
-                    return;
-                }
-
-                checkDuplicateBooking(existingUser.user_id);
-            } else {
-                const insertUserSql = `
-                    INSERT INTO users (name, email, phone, password)
-                    VALUES (?, ?, ?, ?)
-                `;
-
-                db.query(insertUserSql, [name, email, phone, password], (err, insertResult) => {
-                    if (err) {
-                        res.status(500).json({ error: err });
-                        return;
-                    }
-
-                    checkDuplicateBooking(insertResult.insertId);
+            if (overlapResult.length > 0) {
+                res.status(409).json({
+                    message: "These dates are already booked for this Airbnb"
                 });
+                return;
             }
-        });
 
-        function checkDuplicateBooking(user_id) {
-            const duplicateSql = `
-                SELECT * FROM bookings
-                WHERE user_id = ? AND property_id = ?
-            `;
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const total_amount = nights * Number(property.price_per_night);
 
-            db.query(duplicateSql, [user_id, property_id], (err, duplicateResult) => {
+            const findUserSql = "SELECT * FROM users WHERE email = ?";
+
+            db.query(findUserSql, [email], (err, userResult) => {
                 if (err) {
                     res.status(500).json({ error: err });
                     return;
                 }
 
-                if (duplicateResult.length > 0) {
-                    res.status(409).json({
-                        message: "You have already booked this Airbnb",
-                        booking: duplicateResult[0]
-                    });
-                    return;
-                }
+                if (userResult.length > 0) {
+                    const existingUser = userResult[0];
 
-                createBooking(user_id);
-            });
-        }
-
-        function createBooking(user_id) {
-            const insertBookingSql = `
-                INSERT INTO bookings
-                (check_in_date, check_out_date, total_amount, property_id, user_id)
-                VALUES (?, ?, ?, ?, ?)
-            `;
-
-            db.query(
-                insertBookingSql,
-                [check_in_date, check_out_date, total_amount, property_id, user_id],
-                (err, bookingResult) => {
-                    if (err) {
-                        res.status(500).json({ error: err });
+                    if (existingUser.password !== password) {
+                        res.status(401).json({
+                            message: "This email already exists with a different password"
+                        });
                         return;
                     }
 
-                    const booking_id = bookingResult.insertId;
-
-                    const insertPaymentSql = `
-                        INSERT INTO payments
-                        (pay_date, amount, pay_method, pay_status, booking_id)
-                        VALUES (CURDATE(), ?, NULL, 'unpaid', ?)
+                    createBooking(existingUser.user_id);
+                } else {
+                    const insertUserSql = `
+                        INSERT INTO users (name, email, phone, password)
+                        VALUES (?, ?, ?, ?)
                     `;
 
-                    db.query(insertPaymentSql, [total_amount, booking_id], (err, paymentResult) => {
+                    db.query(insertUserSql, [name, email, phone, password], (err, insertResult) => {
                         if (err) {
                             res.status(500).json({ error: err });
                             return;
                         }
 
-                        res.json({
-                            message: "Booking created. Payment is unpaid.",
-                            booking_id: booking_id,
-                            pay_id: paymentResult.insertId,
-                            total_amount: total_amount,
-                            pay_status: "unpaid"
-                        });
+                        createBooking(insertResult.insertId);
                     });
                 }
-            );
-        }
+            });
+
+            function createBooking(user_id) {
+                const insertBookingSql = `
+                    INSERT INTO bookings
+                    (check_in_date, check_out_date, total_amount, property_id, user_id)
+                    VALUES (?, ?, ?, ?, ?)
+                `;
+
+                db.query(
+                    insertBookingSql,
+                    [check_in_date, check_out_date, total_amount, property_id, user_id],
+                    (err, bookingResult) => {
+                        if (err) {
+                            res.status(500).json({ error: err });
+                            return;
+                        }
+
+                        const booking_id = bookingResult.insertId;
+
+                        const insertPaymentSql = `
+                            INSERT INTO payments
+                            (pay_date, amount, pay_method, pay_status, booking_id)
+                            VALUES (CURDATE(), ?, NULL, 'unpaid', ?)
+                        `;
+
+                        db.query(insertPaymentSql, [total_amount, booking_id], (err, paymentResult) => {
+                            if (err) {
+                                res.status(500).json({ error: err });
+                                return;
+                            }
+
+                            res.json({
+                                message: "Booking created. Payment is unpaid.",
+                                booking_id: booking_id,
+                                pay_id: paymentResult.insertId,
+                                total_amount: total_amount,
+                                pay_status: "unpaid"
+                            });
+                        });
+                    }
+                );
+            }
+        });
     });
 });
 
@@ -183,35 +181,10 @@ app.put("/payments/:booking_id/pay", (req, res) => {
             return;
         }
 
-        const findBookingSql = "SELECT property_id FROM bookings WHERE booking_id = ?";
-
-        db.query(findBookingSql, [bookingId], (err, bookingResult) => {
-            if (err) {
-                res.status(500).json({ error: err });
-                return;
-            }
-
-            const propertyId = bookingResult[0].property_id;
-
-            const updatePropertySql = `
-                UPDATE properties
-                SET status = 'Unavailable'
-                WHERE property_id = ?
-            `;
-
-            db.query(updatePropertySql, [propertyId], (err) => {
-                if (err) {
-                    res.status(500).json({ error: err });
-                    return;
-                }
-
-                res.json({
-                    message: "Payment confirmed. Booking is complete.",
-                    booking_id: bookingId,
-                    pay_status: "paid",
-                    property_status: "Unavailable"
-                });
-            });
+        res.json({
+            message: "Payment confirmed. Booking is complete.",
+            booking_id: bookingId,
+            pay_status: "paid"
         });
     });
 });
