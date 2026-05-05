@@ -41,6 +41,11 @@ function confirmPayment() {
         return;
     }
 
+    if (!currentBookingId) {
+        alert("Please confirm booking info first.");
+        return;
+    }
+
     fetch("http://localhost:5000/payments/" + currentBookingId + "/pay", {
         method: "PUT",
         headers: {
@@ -53,7 +58,6 @@ function confirmPayment() {
     .then(response => response.json())
     .then(result => {
         document.getElementById("paymentStatus").innerText = "Paid";
-        document.getElementById("status").innerText = "Unavailable";
         document.getElementById("message").innerText = result.message;
     })
     .catch(error => console.log(error));
